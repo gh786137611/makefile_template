@@ -12,6 +12,7 @@ target := $(obj_dir)/a.out
 objs :=  $(wildcard *.cpp)
 objs := $(patsubst %.cpp, %.o, $(objs)) 
 objs := $(addprefix $(obj_dir)/, $(objs))
+deps := $(patsubst %.o, %.d, $(objs))
 
 
 sub_objs1 := print1.o subdir1.o
@@ -23,11 +24,16 @@ sub_objs2 := $(addprefix $(subobj_dir2)/, $(sub_objs2))
 
 all: $(target)
 
+-include $(deps)
+
 $(target): $(objs) $(sub_objs1) $(sub_objs2)
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
+obj_dir_ := $(subst /,\/,$(obj_dir))
+obj_dir_ := $(strip $(obj_dir_))
 $(objs): $(obj_dir)/%.o : %.cpp
 	$(MKDIR) -p $(obj_dir)
+	$(CXX) $(CXXFLAGS) -MM $< | sed "s/.\{1,\}\.o:/$(obj_dir_)\/&/g" > $(patsubst %.o, %.d, $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(sub_objs1):
